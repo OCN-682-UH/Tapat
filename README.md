@@ -3,6 +3,7 @@
 ### Purpose of Repository: Submit assignments for OCN 682 for Fall 2026 semester
 
 **Contents**
+
 [Week 02](https://github.com/OCN-682-UH/Tapat/tree/840565e365cf434e7720be3d1d9452b869af6978/week_02)
 
 **Layout of folders:**
