@@ -12,6 +12,8 @@
 
 [Week_05](https://github.com/OCN-682-UH/Tapat/tree/b78ae9b1516bb6832732f510fdeb1c4686ae0562/week_05)
 
+[Week_07](https://github.com/OCN-682-UH/Tapat/tree/388f67f731751301890390bfad0303982ef56f3e/week_06)
+
 **Layout of folders:**
 
 Week #
