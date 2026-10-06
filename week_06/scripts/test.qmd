@@ -1,0 +1,21 @@
+---
+title: "My first Quarto doc"
+author: "Gabby Tapat"
+format: html
+editor: visual
+---
+
+###My document
+
+#Loading in my libraries
+
+```{r}
+library(tidyverse)
+library(here)
+library(palmerpenguins)
+```
+This data set has `r count(penguins)` rows.
+The mean is `r round(mean(penguins$body_mass_g, na.rm = TRUE), 1)`.
+
+These are the penguin species: `r levels(penguins$species)`
+
