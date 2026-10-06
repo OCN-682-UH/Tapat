@@ -1,0 +1,91 @@
+---
+title: "HW for week 06"
+author: "Gabby Tapat"
+date: "`r Sys.Date()`"
+format: html
+editor: visual
+---
+
+## The purpose of this document is for week 06 HW
+
+**Step 1. Load in libraries**
+
+```{r}
+#|message: false
+
+library(tidyverse)
+library(here)
+library(kableExtra)
+```
+
+**Step 2. Load in the data**
+
+*Note: dataset from Week 04 - Maunalua biogeochemistry data*
+
+```{r}
+ChemData <- read_csv(here("week_06", "data", "chemicaldata_maunalua.csv"))
+```
+
+**Step 3. Data Analysis**
+
+*Data Cleaning*
+
+Have to:
+
+- drop rows with NA
+
+- separate the Tide_time column into two individual columns
+
+```{r}
+clean_ChemData <- ChemData |>
+  drop_na() |> #Remove all the NAs
+  #Separate the Tide_time column into appropriate columns
+  separate_wider_delim(cols = Tide_time, #which column to separate
+                       delim = "_", #separate by their underscore
+                       names = c("Tide", "Time"),
+                       cols_remove = FALSE)  #keep the OG column
+```
+
+*Creating a table*
+
+```{r}
+#| label: tbl-season-zone-means
+#| tbl-cap: "Mean pH for different zones corresponding to season"
+
+clean_ChemData |>
+  group_by(Season, Zone ) |>
+  summarise(pH_mean = mean(pH, na.rm = TRUE)) |>
+  kbl() |>
+  kable_classic() |>
+  kable_styling(full_width = FALSE)
+```
+
+*Creating a figure*
+
+```{r}
+#| label: fig-spring-pH
+#| fig-cap: "pH levels corresponding to temperature in SGD zones during spring season"
+#| fig-subcap: "Source: Silbiger et al., 2020 / Proceedings of the Royal Society B"
+#| fig-width: 10
+#| fig-height: 7
+
+clean_ChemData |> #Filter out a subset of data
+filter(Season == "SPRING", !(Zone == "Offshore")) |> #Taking out offshore data b/c data points are small
+  ggplot(aes(x = Temp_in, 
+           y= pH,
+           group = Zone,
+           color = Zone)) +
+  geom_point(size = 2) +
+  scale_colour_viridis_d(option = "C")+
+  geom_smooth(method = "lm", fill = "white") +
+  facet_wrap(~Zone, nrow = 3)+ #Forces plots to be on top of one another, shares x-axis
+  guides(color = "none")+
+  theme_dark()+
+  labs(title = "pH levels corresponding to temperature in SGD zones during spring season",
+       x = "Temperature (°C)",
+       y = "pH")+
+  theme(
+        axis.title = element_text(size = 12,
+                                  face = "bold")
+  )
+```
