@@ -1,0 +1,12 @@
+name: hw_week_063
+title: HW Week 06
+username: gtapat
+account: gtapat
+server: connect.posit.cloud
+hostUrl: https://api.connect.posit.cloud/v1
+appId: 01a10f38-5c50-6abc-b93f-0665c485281d
+bundleId:
+url: https://connect.posit.cloud/gtapat/content/01a10f38-5c50-6abc-b93f-0665c485281d
+version: 1
+asMultiple: FALSE
+asStatic: TRUE

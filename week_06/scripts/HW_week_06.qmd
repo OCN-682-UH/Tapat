@@ -2,7 +2,10 @@
 title: "HW for week 06"
 author: "Gabby Tapat"
 date: "`r Sys.Date()`"
-format: html
+format:
+  html:
+    code-fold: true              # code hidden by default, with a toggle button
+    code-summary: "Show code"    # customize the button label
 editor: visual
 ---
 
@@ -46,7 +49,7 @@ clean_ChemData <- ChemData |>
                        cols_remove = FALSE)  #keep the OG column
 ```
 
-*Creating a table*
+*Creating a table -*
 
 ```{r}
 #| label: tbl-season-zone-means
@@ -60,7 +63,7 @@ clean_ChemData |>
   kable_styling(full_width = FALSE)
 ```
 
-*Creating a figure*
+*Creating a figure - Does temperature affect pH?*
 
 ```{r}
 #| label: fig-spring-pH
@@ -89,3 +92,39 @@ filter(Season == "SPRING", !(Zone == "Offshore")) |> #Taking out offshore data b
                                   face = "bold")
   )
 ```
+
+*Creating a figure - Does temperature affect % SGD?*
+
+```{r}
+#| label: fig-spring-sgd
+#| fig-cap: "Percent of SGD corresponding to temperature in SGD zones during spring season"
+#| fig-subcap: "Source: Silbiger et al., 2020 / Proceedings of the Royal Society B"
+#| fig-width: 10
+#| fig-height: 7
+
+clean_ChemData |> #Filter out a subset of data
+  filter(Season == "SPRING", !(Zone == "Offshore")) |> #Taking out offshore data b/c data points are small
+  ggplot(aes(x = Temp_in, 
+             y= percent_sgd,
+             group = Zone,
+             color = Zone)) +
+  geom_point(size = 2) +
+  scale_colour_viridis_d(option = "C")+
+  geom_smooth(method = "lm", fill = "white") +
+  facet_wrap(~Zone, nrow = 3)+ #Forces plots to be on top of one another, shares x-axis
+  guides(color = "none")+
+  theme_dark()+
+  labs(title = "Percent of SGD corresponding to temperature in SGD zones during spring season",
+       x = "Temperature (°C)",
+       y = "% SGD")+
+  theme(
+    axis.title = element_text(size = 12,
+                              face = "bold")
+  )
+```
+
+*Takeaways:*
+
+- pH increases when Temperature increases in the different zones
+- \% SGD has no linear relationship to temperature in the Ambient zone
+- \% SGD has a slight negative linear relationship to temperature in the Diffuse and Transition zones
