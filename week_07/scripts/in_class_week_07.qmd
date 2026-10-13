@@ -1,0 +1,116 @@
+---
+title: "In class for week 07"
+author: "Gabby Tapat"
+date: "`r Sys.Date()`"
+format: html
+editor: visual
+---
+
+## The purpose of this document is for week 07 in class activities
+
+**1) Load libraries**
+
+trouble downloading new packages: <https://support.posit.co/hc/en-us/articles/206827897-Secure-Package-Downloads-for-R>
+
+```{r}
+library(tidyverse)
+library(here)
+library(maps)
+library(mapdata)
+library(mapproj)
+```
+
+**2) Load in data**
+
+```{r}
+# Population in California by county
+popdata <- read_csv(here("Week_07", "data", "CApopdata.csv"))
+
+# Seastar counts at field sites in California
+stars <- read_csv(here("Week_07", "data", "stars.csv"))
+```
+
+**3) Data Analysis**
+
+```{r}
+world <- map_data("world")
+
+usa <- map_data("usa")
+
+italy <- map_data("italy")
+
+states <- map_data("state")
+
+counties <- map_data("county")
+
+#map of the world
+ggplot()+
+  geom_polygon(data = world,
+               aes(x= long, y= lat,
+                   group = group,
+                    fill = region),
+               colour = "black") +
+  theme_minimal() +
+  guides(fill = "none") +
+  theme(panel.background = 
+          element_rect(fill = "lightblue")) +
+  coord_map(projection = "mercator",
+            xlim = c(-180, 180))
+```
+
+```{r}
+CA_data <- states |>
+  filter(region == "california")
+
+ggplot()+
+  geom_polygon(data = CA_data,
+               aes(x= long, y= lat,
+                   group = group,
+                ),
+               colour = "black") +
+  theme_dark() +
+  guides(fill = "none") +
+  labs(title = "State of California")+
+  theme(panel.background = 
+          element_rect(fill = "green")) + 
+  coord_map()
+
+```
+
+```{r}
+CApop_county <- popdata |>
+  select("subregion"= County, Population) |>
+  inner_join(counties) |>
+  filter(region =="california")
+
+ggplot()+
+  geom_polygon(data = CApop_county,
+               aes(x= long, y= lat,
+                   group = group,
+                   fill = Population),
+               colour = "black") +
+  geom_point(data = stars,
+             aes(x =long, y= lat,
+                  size = star_no))+
+  coord_map() +
+  theme_void()+
+  scale_fill_gradient(transform = "log10")+
+  labs(size = "# stars / m^2")
+
+ggsave(here("week_07", "outputs", "CApop.pdf"))
+  
+```
+
+```{r}
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+
+world_sf <- ne_countries(scale = "medium",
+                         returnclass = "sf")
+
+ggplot(world_sf) +
+  geom_sf(fill = "lightgray",
+          color = "white") +
+  theme_void()
+```
