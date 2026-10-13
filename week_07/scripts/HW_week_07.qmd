@@ -1,0 +1,133 @@
+---
+title: "Map Assignment for Week 07"
+author: "Gabby Tapat"
+date: "`r Sys.Date()`"
+format:
+  html:
+    code-fold: true              # code hidden by default, with a toggle button
+    code-summary: "Show code"    # customize the button label
+editor: visual
+---
+
+### The purpose of this document is to make a map with one of the following TidyTuesday datasets.
+
+**1) Load libraries**
+
+```{r}
+#| message: false
+
+library(tidyverse)
+library(here)
+library(maps)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(maptiles)
+library(tidyterra)
+library(tidygeocoder)
+library(ggspatial)
+```
+
+**2) Load in the data**
+
+The chosen one: [Meteorites](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-06-11)
+
+```{r}
+#| message: false
+
+meteorites <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2019/2019-06-11/meteorites.csv") |>
+  drop_na()|>
+  write_csv(here("week_07", "data", "meteorites.csv")) #export dataset in designated data folder
+
+#Look at the data
+head(meteorites)
+```
+
+**3) Data Analysis:** *Make a Map*
+
+- Retrieving a polygon for the AOI, in this case, Africa. (will be used later)
+
+```{r}
+africa <- ne_countries(continent = "africa", scale = "medium")
+  
+ggplot(africa) +
+  geom_sf(fill = "lightgray",
+          color = "white") +
+  coord_sf(crs = 4326) + 
+  theme_void()
+```
+
+- Retrieving ESRI satellite imagery of Africa
+
+```{r}
+# Define a bounding box around Africa
+# xmin/xmax = westmost/eastmost longitude
+# ymin/ymax = southernmost/northernmost latitude
+africa_bbox <- st_as_sfc(
+  st_bbox(c(xmin = -30, ymin = -34.85,
+            xmax =60, ymax = 40),
+          crs = 4326) # crs = 4326 means WGS84 — the lat/lon system your GPS uses
+)
+
+tiles_satellite <- get_tiles(
+  africa_bbox,               # the area to download
+  provider = "Esri.WorldImagery", # which tile source to use
+  zoom = 3,                  # level of detail (3 = continent, 20 = building)
+  crop = TRUE               # clip to our exact bbox (vs. slightly larger)
+)
+
+# geom_spatraster_rgb() is from {tidyterra}
+# It reads the 3 color layers and renders them as a photo
+ggplot() +
+  geom_spatraster_rgb(data = tiles_satellite) +
+  coord_sf(crs = 4326) +
+  theme_minimal()
+```
+
+- Filter the meteorite dataset (which is worldwide) to only meteorites found in the AOI
+
+```{r}
+# Step 1: convert your data frame to an sf object
+# coords tells sf which columns hold longitude and latitude
+meteorites_sf <- st_as_sf(meteorites,
+                        coords = c("long", "lat"),
+                        crs = 4326)
+
+#had trouble filtering the data to a certain continent
+#got help from: https://stackoverflow.com/questions/57014381/how-to-filter-an-r-simple-features-collection-using-sf-methods-like-st-intersect
+
+meteorites_africa <- st_filter(meteorites_sf, africa, .predicate = st_within) 
+#.predicate = function that helps keep the data within the polygon & drops the rest
+head(meteorites_africa) #check
+```
+
+- Plot the data on the map
+
+```{r}
+ggplot() +
+  geom_spatraster_rgb(data = tiles_satellite) +
+  geom_sf(data = meteorites_africa,
+             color = "darkblue",
+             size = 2) +
+  annotation_scale(           # scale bar
+    location = "bl",          # bl = bottom-left
+    bar_cols = c("red", "white")) +
+  annotation_north_arrow(     # north arrow
+    location = "tr") +        # top right
+  coord_sf(crs = 4326) +
+  labs(title = "Meteorites that landed in Africa",
+       caption = "Basemap: ESRI World Imagery") +
+  theme_minimal()
+#save to outputs folder
+ggsave(here("week_07", "outputs", "meteoritesAfrica_map.pdf"))
+```
+
+[Fun facts!]{.underline}
+
+1.  Over half of the meteorites ever found were from Antarctica.
+
+2.  Most meteorites are found in deserts
+
+3.  The Sahara Desert (northern Africa) is a region with one of the highest counts of meteorites retrieved.
+
+For more interesting read, see [Geography Realm](https://www.geographyrealm.com/why-are-there-more-meteorites-in-antarctica/)
