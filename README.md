@@ -14,6 +14,8 @@
 
 [Week_06](https://github.com/OCN-682-UH/Tapat/tree/6d59355e580ea62d0c9809012ceaa7fa7ade3180/week_06) [Posit Cloud](https://01a113d6-ef83-e26d-20d8-48c6f5af7bd1.share.connect.posit.cloud/)
 
+[Week 07](https://github.com/OCN-682-UH/Tapat/tree/099921863e94c5f96d8a1232861377ed85c0060b/week_07) [Posit Cloud](https://01a1329b-cef1-6d64-896f-824c2d4bb51f.share.connect.posit.cloud/)
+
 **Layout of folders:**
 
 Week #
