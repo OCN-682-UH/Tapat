@@ -1,0 +1,120 @@
+---
+title: "Good plot bad plot"
+author: "Gabby Tapat"
+date: "`r Sys.Date()`"
+format:
+  html:
+    code-fold: true              # code hidden by default, with a toggle button
+    code-summary: "Show code"    # customize the button label
+editor: visual
+---
+
+## The purpose of this document is to create a good plot and a bad plot from the same dataset.
+
+1\) Load libraries
+
+```{r}
+#| message: false
+
+library(here)
+library(tidyverse)
+library(tidytuesdayR)
+```
+
+2\) Load data: from [Water Insecurity](https://github.com/rfordatascience/tidytuesday/blob/main/data/2025/2025-01-28/readme.md)
+
+```{r}
+#| message: false
+
+tuesdata <- tidytuesdayR::tt_load(2025, week = 4)
+
+water_insecurity_2022 <- tuesdata$water_insecurity_2022 |>
+  write_csv(here("Good plot Bad plot", "data", "water_insecurity_2022.csv"))
+water_insecurity_2023 <- tuesdata$water_insecurity_2023 |>
+  write_csv(here("Good plot Bad plot", "data", "water_insecurity_2023.csv"))
+```
+
+#### Bad plot
+
+```{r}
+ggplot(data = water_insecurity_2022,
+       aes( x = total_pop,
+            y = plumbing)
+      ) +
+  geom_point(color = "red") +
+  geom_point(data = water_insecurity_2023, color = "blue")+
+  labs(
+    title = "Water Insecurity in 2022 and 2023"
+  )
+
+ggsave(here("Good plot Bad plot", "outputs", "bad_plot.jpg"), width = 10)
+```
+
+[Why is it a bad plot?]{.underline}
+
+This is a bad plot considering that there's no context to what's being plotted. The plot may be a scatter plot, but majority of the points are clustered at the bottom left of the plot and the blue dots overpower the red dots (there's too much overlapping of the data). The title of the plot is very broad, and the axes' titles provide little to nothing that correlate back to the title. Also, the value range for the x-axis is unappealing to the eye.
+
+#### Good plot
+
+but first, data cleaning...
+
+```{r}
+#week 04 lesson coming in handy 
+
+clean_2022 <- water_insecurity_2022 |>
+  separate_wider_delim(cols = name,
+                       delim = ",",
+                       names = c("county", "State"))
+
+clean_2023 <- water_insecurity_2023 |>
+  separate_wider_delim(cols = name,
+                       delim = ",",
+                       names = c("county", "State"))
+
+combined_water_insecurity <- rbind(clean_2022, clean_2023)
+
+#r_bind() is a baseR function to combine data frames by the rows
+#probably better idea to combine the data frames first then do the  separate_wider_delim() afterwards but my mind defaulted to do this
+```
+
+```{r}
+#| fig-width: 12
+#| fig-height: 7
+
+top5rank <- filter(.data = combined_water_insecurity,
+       county %in% c("Apache County", "Cook County", "Harris County", "Los Angeles County", "Maricopa County")) |> #checked first the top 5 before piping in w/ ggplot
+  ggplot(aes(x = county,
+             y = plumbing,
+             fill = factor(year))) + #factoring so it labels a certain way / in order
+  geom_col(position = "dodge") + #dodge -> no overlapping 
+  theme_classic() +
+  labs(
+    title = "Top 5 U.S. Counties with the Highest Water Insecurity",
+    subtitle = "Pertaining to indoor plumbing facilities", 
+    caption = "Data from U.S. Census Bureau",
+    x = "",
+    y = "Households lacking plumbing facilities", 
+    fill = ""
+  ) +
+  scale_fill_viridis_d(option = "D")+
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+  #bars were floating / not touching x-axis line; help from: https://stackoverflow.com/questions/75756785/r-histogram-graph-ggplot-floating-above-x-line
+  theme(
+    plot.title = element_text(color = "navy", size = 20, face = "bold"),
+    plot.subtitle = element_text(color = "navy", size = 16, face = "bold"),
+    plot.caption = element_text(face = "italic"),
+    axis.text.x = element_text(color = "forestgreen" ,size = 16, face = "bold"),
+    axis.text.y = element_text(size = 14, face = "bold"),
+    axis.title.y = element_text(color = "forestgreen" ,size = 16, face = "bold"),
+    legend.text = element_text(size = 14),
+    legend.position = "top"
+  )
+
+top5rank
+
+ggsave(here("Good plot Bad plot", "outputs", "good_plot.jpg"), width = 12)
+```
+
+[Why is it a good plot?]{.underline}
+
+This is a good plot because it emphasizes what I want the audience to remember about this dataset, that is, the top five U.S. counties with the highest water insecurity, pertaining to the lack of plumbing facilities in their household. The legend is placed at the top and in logical order. The axes' titles are labeled and sized appropriately for it's figure output. The plot reads clearly and things can be put into context just by looking at it.
