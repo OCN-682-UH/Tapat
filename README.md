@@ -16,6 +16,10 @@
 
 [Week 07](https://github.com/OCN-682-UH/Tapat/tree/099921863e94c5f96d8a1232861377ed85c0060b/week_07) [Posit Cloud](https://01a1329b-cef1-6d64-896f-824c2d4bb51f.share.connect.posit.cloud/)
 
+[Week_08](https://github.com/OCN-682-UH/Tapat/tree/6e38277a71559e33f96f42984386a7fc6fe4dda8/week_08) [Posit Cloud](https://01a15825-1866-9055-6b5a-a4a37dafd374.share.connect.posit.cloud/)
+
+[Good plot Bad plot](https://github.com/OCN-682-UH/Tapat/tree/6e38277a71559e33f96f42984386a7fc6fe4dda8/Good_plot_Bad_plot) [Posit Cloud](https://01a15826-82c1-f167-6e10-a335aa77511f.share.connect.posit.cloud/)
+
 **Layout of folders:**
 
 Week #
