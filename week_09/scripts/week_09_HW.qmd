@@ -1,0 +1,91 @@
+---
+title: "Week 09 HW"
+author: "Gabby Tapat"
+date: "`r Sys.Date()`"
+format: html
+editor: visual
+---
+
+## The purpose of this document is for the week 09 assignment on factoring the intertidal data.
+
+1\) Load libraries
+
+```{r}
+#| message: false
+#| code-fold: true
+#| code-summary: "Show code"
+
+library(tidyverse)
+library(here)
+library(janitor)
+```
+
+2\) Load data
+
+```{r}
+#| message: false
+
+intertidal <- read_csv(here("week_09", "data", "intertidaldata.csv")) |>
+  clean_names() #make column names lowercase & look the same
+
+intertidal_lat <- read_csv(here("week_09", "data", "intertidaldata_latitude.csv"))
+```
+
+3\) Data Analysis
+
+I want to sum up the counts of the whelks, crabs, and stars by their site and quadrant
+
+```{r}
+
+counts <- intertidal|>
+  group_by(quadrat) |>
+  summarise(count_stars = sum(stars_counts, na.rm = TRUE),
+            count_whelks = sum(whelks_counts, na.rm = TRUE),
+            count_crabs = sum(crabs_counts, na.rm = TRUE))
+
+head(counts)
+```
+
+There are 2 rows that seem like it was error with naming conventions in the observation, plus values were 0's therefore will be removing.
+
+```{r}
+#row 3, quadrat says "Low ." 
+#row 5, quadrat saya "Mid 1"
+counts <- counts[-c(3, 5), ]
+```
+
+The data is in wide format, I want it to be in long format and factor based on quadrat (Low –\> High tide).
+
+```{r}
+counts_long <- counts |>
+  pivot_longer(
+    cols = c(count_crabs, count_whelks, count_stars),
+    names_to = "type_of_organism",
+    values_to = "count",
+    names_prefix = "count_") |> #removes portion of the string for new obs. 
+  group_by(quadrat, type_of_organism) |>
+           summarise(total_count = sum(count, na.rm = TRUE), .groups = "drop") |>
+  mutate(quadrat = factor(quadrat, levels = c("Low", "Mid", "High"))) |>
+  mutate(type_of_organism = fct_recode(type_of_organism, #used for plotting
+                                       "Crabs" = "crabs",
+                                       "Stars" = "stars",
+                                       "Whelks" = "whelks"))
+```
+
+Plotting
+
+```{r}
+ggplot(counts_long, aes(x = quadrat, y = total_count)) +
+  geom_col(fill = "lightblue") +
+  facet_wrap(~type_of_organism, scales = "free_y") + 
+  #original scale was in the whelks count which was too high for stars/ crabs
+  labs(title = "Total Count of Different Organisms by Tide Height",
+       x = "Tide Height",
+       y = "Count")  +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold")
+  ) 
+
+ggsave(here("week_09", "outputs", "plot.png"))
+```

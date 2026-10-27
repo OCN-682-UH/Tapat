@@ -1,0 +1,27 @@
+---
+title: "In-class doc"
+author: "Gabby Tapat"
+format: html
+editor: visual
+---
+
+1\) Load Libraries
+
+```{r}
+c
+library(tidytuesdayR)
+```
+
+2\) Load data
+
+```{r}
+income_mean <- tidytuesdayR::tt_load(2021, week = 7)$income_mean
+```
+
+3\)
+
+```{r}
+starwars |> 
+  filter(!is.na(species)) |>   # remove NAs
+  count(species, sort = TRUE)
+```
