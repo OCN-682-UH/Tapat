@@ -1,0 +1,79 @@
+---
+title: "Shiny App Script test"
+author: "Gabby Tapat"
+format: html
+editor: visual
+---
+
+## The purpose of this document is to test run code before integrating into a Shiny app.
+
+Created on: 2026-11-15
+
+Updated on: 2026-11-17
+
+Homework:
+
+Use any data set to make a shiny app. Your app must have at least one dynamic figure and one other output (can be anything). You must publish it on Posit Connect Cloud so that we can view your app online. **Put the link in your ReadMe file so that we can easily find and click on it.**
+
+1\) Load libraries
+
+```{r}
+library(tidyverse)
+library(here)
+library(patchwork)
+```
+
+2\) Load data
+
+Data is from the beginning of the gaging station to the most recent date that this data was collected, which was 2026-09-25
+
+```{r}
+mp <- read_csv(here("week_11", "data", "USGS_16247100_manoa_palolo.csv"))
+pukele <- read_csv(here("week_11", "data", "USGS_16244000_pukele.csv"))
+waihi <- read_csv(here("week_11", "data", "USGS_16238500_waihi.csv"))
+makiki <- read_csv(here("week_11", "data", "USGS_16238000_makiki.csv"))
+
+combined <- bind_rows(makiki, mp, pukele, waihi) |>
+  mutate(
+    discharge_cfs = coalesce(discharge_cfs, discharge_cfs_1, discharge_cfs_2),
+    turbidity_FNU = coalesce(turbidity_FNU, turbidity_FNU_1, turbidity_FNU_2),
+    gage_height_ft = coalesce(gage_height_ft, gage_height_ft_1, gage_height_ft_2),
+    ssc_mg_L = coalesce(ssc_mg_L, ssc_mg_L_1, ssc_mg_L_2)) |>
+  select(-discharge_cfs_1, -discharge_cfs_2,
+         -turbidity_FNU_1, -turbidity_FNU_2,
+         -gage_height_ft_1, -gage_height_ft_2,
+         -ssc_mg_L_1, -ssc_mg_L_2) |>
+  write_csv(here("week_11", "data", "gage_data.csv"))
+```
+
+3\) Plot
+
+```{r}
+theme_set(theme_minimal())
+
+Q <-ggplot(data = makiki, aes(x= time, y= discharge_cfs))+
+  geom_line(colour = "blue")+
+  labs(title = "Streamflow and Turbidity for Makiki stream",
+       y= "Discharge (cfs)",
+       x="")
+
+T <-ggplot(data = makiki, aes(x= time, y= turbidity_FNU))+
+  geom_line(colour = "brown")+
+  labs(y= "Turbidity (FNU)",
+       x ="Time")
+
+QT <-Q/T
+
+print(QT)
+```
+
+4\) Plot
+
+```{r}
+filtered_year <- makiki|>
+  filter(time >= "2010-02-20", time <= "2011-02-25") |>
+  summarise(
+    max_Q = max(discharge_cfs, na.rm = TRUE),
+    min_Q = min(discharge_cfs, na.rm = TRUE))
+
+```

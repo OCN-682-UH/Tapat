@@ -1,0 +1,12 @@
+name: good_plot_bad_plot_assignment
+title: Good plot Bad plot Assignment
+username: gtapat
+account: gtapat
+server: connect.posit.cloud
+hostUrl: https://api.connect.posit.cloud/v1
+appId: 01a15826-82c1-f167-6e10-a335aa77511f
+bundleId:
+url: https://connect.posit.cloud/gtapat/content/01a15826-82c1-f167-6e10-a335aa77511f
+version: 1
+asMultiple: FALSE
+asStatic: TRUE

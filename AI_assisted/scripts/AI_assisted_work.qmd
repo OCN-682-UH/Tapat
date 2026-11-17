@@ -1,0 +1,284 @@
+---
+title: "OPIHI AI-assisted work"
+author: "Gabby Tapat"
+format: html
+editor: visual
+---
+
+CREATED: 2026-11-05
+
+UPDATED: 2026-11-08
+
+## The purpose of this document is to create a clean data set from OPIHI data:
+
+1\) Load libraries
+
+```{r}
+library(tidyverse)
+library(here)
+library(readxl)
+library(janitor)
+library(lubridate)
+library(hms)
+```
+
+2\) Location for all 20 files
+
+```{r}
+excel_files <- list.files(
+  path = here("AI_assisted", "AI_data"), #where ever your data folder is located witht the raw files using the here() function
+  pattern = "\\.xlsx$|\\.xls$", 
+  full.names = TRUE
+)
+```
+
+3\) Functions
+
+- To read and clean a sheet - filter out chart/ blank sheets (no cell grids)
+
+```{r}
+read_single_sheet <- function(file_path, sheet_name) {
+  tryCatch({
+    # Read sheet as text to prevent column type conflicts during bind
+    raw_df <- read_excel(file_path, sheet = sheet_name, col_types = "text")
+    
+    # Remove completely empty rows and columns
+    cleaned_df <- raw_df |> 
+      remove_empty(c("rows", "cols"))
+    
+    # Skip if sheet contains no tabular data (e.g., chart sheet)
+    if (nrow(cleaned_df) == 0 || ncol(cleaned_df) == 0) {
+      return(NULL)
+    }
+    
+    # Add metadata tracking origin of each row
+    cleaned_df |> 
+      mutate(
+        file_name = basename(file_path),
+        sheet_name = as.character(sheet_name),
+        .before = 1
+      )
+  }, error = function(e) {
+    # Catches chart sheets or corrupted sheets silently
+    return(NULL)
+  })
+}
+```
+
+4\) Iterate on every sheet and file –\> stores all valid tables into a single list
+
+```{r}
+# Map through all files and all sheets per file
+all_sheets_list <- map(excel_files, function(file) {
+  sheets <- excel_sheets(file)
+  
+  map(sheets, ~read_single_sheet(file, .x)) |> 
+    compact() # Drop NULLs (empty/chart sheets)
+}) |> 
+  list_flatten() 
+
+# Standardize column headers to snake_case across all extracted tables
+processed_sheets <- map(all_sheets_list, function(df) {
+  df |> 
+    clean_names() |> 
+    mutate(across(everything(), as.character))
+})
+```
+
+### \*Remove sheets 3, 48, 50 after manual check\*
+
+- Sheet 3 - Copy of OPIHI field study 2023 - group data sheet
+
+  - not filled out completely + assumption that some cells were filled as an example
+
+- Sheet 48 - OPIHI Field Study 2026 - Waipuilani Data - Quadrat Pt Intercept (Example)
+
+  - Reason: it's an example probably from another data set already in the files
+
+- Sheet 50 - Playing around...Jo March 2022 - just the one sheet
+
+  - Reason: no column names + assumption that data is from OPIHI Data - Reformatted file
+
+```{r}
+# Remove multiple sheets b/c unusable)
+processed_sheets <- processed_sheets[-c(3, 48, 50)]
+```
+
+test - short names
+
+```{r}
+# 1. Generate clean list names from file_name and sheet_name inside each data frame
+clean_list_names <- map_chr(processed_sheets, function(df) {
+  # Extract first row metadata
+  f_name <- df$file_name[1]
+  s_name <- df$sheet_name[1]
+  
+  # Remove file extension (.xlsx or .xls)
+  f_short <- str_remove(f_name, "\\.(xlsx|xls)$")
+  
+  # Clean both strings into snake_case and combine
+  clean_f <- make_clean_names(f_short)
+  clean_s <- make_clean_names(s_name)
+  
+  paste0(clean_f, "_", clean_s)
+})
+
+# 2. Assign the clean names to your list
+named_sheets <- set_names(processed_sheets, clean_list_names)
+
+# View all clean names to decide your manual groups
+names(named_sheets)
+```
+
+2\) Group and separate the sheets
+
+```{r}
+# Group 1: Specific sites or survey types
+OPIHI_data_year <- named_sheets[c(
+  "opihi_data_2004_opihi_data_2004",                                          
+  "opihi_data_2005_opihi_data_2005",                                                "opihi_data_2006_and_2007_opihi_data_2006_and_2007",                                  "opihi_data_2008_might_be_mis_type_opihi_data_2008_might_be_mis_t",                 "opihi_data_2016_opihi_data_2016",                                                  "opihi_data_2017_opihi_data_2017",                                              "opihi_data_2018_opihi_data_2018",                                                  "opihi_data_2019_opihi_data_2019",                                                "opihi_data_2020_all_raw_data_opihi_16_20"  
+)]
+
+# Group 2: Another set of sheets
+reformatted_file <- named_sheets[c(
+  "opihi_data_reformated_totals_no_excl",                                                     "opihi_data_reformated_presence_absence_no_excl",                       "opihi_data_reformated_diversity_excl_ts",                                "opihi_data_reformated_presence_absence_excl_ts",                                  "opihi_data_reformated_tides_data_2016_20",                                        "opihi_data_reformated_edu_stuff_to_link_to_metadata",                             "opihi_data_reformated_metadata",                                                  "opihi_data_reformated_sheet12",                                                   "opihi_data_reformated_sheet13"  
+)]
+
+
+# Group 3: Another set of sheets
+formatted_nice <- named_sheets[c(
+  "copy_of_opihi_2024_datasheet_quadrat_pt_counts",                                   "copy_of_opihi_2024_datasheet_summing",
+  "opihi_2024_datasheet_metadata",                                                    "opihi_2024_datasheet_quadrat_pt_counts",                                           "opihi_2024_datasheet_quadrat_percent_cover",                                      "opihi_2024_datasheet_grouped_quadrat_pt_counts_sum",                              "opihi_2024_datasheet_grouped_quadrat_percent_cover",                             "opihi_2024_datasheet_sediment_data",                                              "opihi_2026_longitudinal_monitoring_data_metadata",                                 "opihi_2026_longitudinal_monitoring_data_transect",                               "opihi_2026_longitudinal_monitoring_data_quadrat_pt_counts",                        "opihi_biol_499_2025_lt_data_metadata",                                           "opihi_biol_499_2025_lt_data_quadrat_pt_counts",
+  "raw_mauliola_opihi_data_2026_transect_point_intercept",
+  "raw_mauliola_opihi_data_2026_metadata",
+  "raw_mauliola_opihi_data_2026_quadrat_pt_counts",
+  "sandy_beach_only_totals_no_excl" 
+)]
+
+# Group 4: Another set of sheets
+sim_structure <- named_sheets[c(
+  "copy_of_opihi_field_study_2023_all_group_data_p1_p2_transect_pt_intercept_p1",
+  "copy_of_opihi_field_study_2023_all_group_data_p1_p2_transect_pt_intercept_p2",    "copy_of_opihi_field_study_2023_all_group_data_p1_p2_p1_p2_transect",             "copy_of_opihi_field_study_2023_all_group_data_p1_p2_quadrat_pt_intercept_p1",      "copy_of_opihi_field_study_2023_all_group_data_p1_p2_quadrat_pt_intercept_p2",      "copy_of_opihi_field_study_2025_all_group_data_p1_p2_use_this_one_transect_pt_intercept_p1",
+ "copy_of_opihi_field_study_2025_all_group_data_p1_p2_use_this_one_transect_pt_intercept_p2",
+ "copy_of_opihi_field_study_2025_all_group_data_p1_p2_use_this_one_p1_p2_transect",   "copy_of_opihi_field_study_2025_all_group_data_p1_p2_use_this_one_quadrat_pt_intercept_p1", 
+"copy_of_opihi_field_study_2025_all_group_data_p1_p2_use_this_one_quadrat_pt_intercept_p2", 
+"opihi_field_study_2026_waipuilani_data_groups",                                   "opihi_field_study_2026_waipuilani_data_transect_pt_intercept_420",                 "opihi_field_study_2026_waipuilani_data_transect_pt_intercept_54",                 "opihi_field_study_2026_waipuilani_data_total_transect",                          "opihi_field_study_2026_waipuilani_data_quadrat_pt_intercept",                      "opihi_field_study_2026_waipuilani_data_sheet9"               
+)]
+```
+
+test
+
+```{r}
+# 1. Define key column terms to detect valid header rows
+header_keywords <- c(
+  "Date", "Notes", "Location", "latitude", "longitude", 
+  "Transect Length", "Num of T", "School"
+)
+
+# 2. Helper function to process individual sheets
+process_sheet_headers <- function(df, keywords = header_keywords, min_matches = 2, max_scan_rows = 10) {
+  
+  # Determine how many rows to scan at the top of the sheet
+  n_rows_to_check <- min(nrow(df), max_scan_rows)
+  if (n_rows_to_check < 1) return(NULL)
+  
+  # Count unique keyword matches for each row in the scan window
+  match_counts <- map_int(seq_len(n_rows_to_check), function(i) {
+    row_text <- str_to_lower(paste(df[i, ], collapse = " "))
+    sum(map_lgl(keywords, ~ str_detect(row_text, .x)))
+  })
+  
+  best_match_count <- max(match_counts)
+  best_row_idx     <- which.max(match_counts)
+  
+  # RULE: Skip sheet if it fails to match at least 2 keywords
+  if (best_match_count < min_matches) {
+    return(NULL)
+  }
+  
+  # Extract headers from the detected row
+  raw_headers <- as.character(df[best_row_idx, ])
+  
+  # Assign temporary labels to blank header cells so they aren't lost
+  raw_headers <- ifelse(
+    is.na(raw_headers) | str_trim(raw_headers) == "", 
+    paste0("out_of_scope_col_", seq_along(raw_headers)), 
+    raw_headers
+  )
+  
+  # Drop all metadata rows above header row, as well as the header row itself
+  if (best_row_idx >= nrow(df)) return(NULL) # Skip if no data rows below header
+  data_df <- df[(best_row_idx + 1):nrow(df), , drop = FALSE]
+  colnames(data_df) <- raw_headers
+  
+  # Clean names and filter out unwanted columns
+  cleaned_df <- data_df %>% 
+    clean_names() %>% 
+    # Drop sheet_name metadata column
+    select(-any_of("sheet_name")) %>% 
+    # Remove completely empty rows and columns
+    remove_empty(c("rows", "cols")) %>% 
+    # Drop columns that fall outside the main data table (blank gaps, artifacts)
+    select(-matches("^out_of_scope_col|^x\\d+|^na$|^untitled"))
+  
+  return(cleaned_df)
+}
+```
+
+apply
+
+```{r}
+# 3. Apply to list of sheet data frames (e.g., named_sheets or a sub-group list)
+cleaned_list <- map(reformatted_file, ~ process_sheet_headers(.x, keywords = header_keywords, min_matches = 2))
+
+# 4. Filter out skipped (NULL) sheets
+valid_sheets_list <- compact(cleaned_list)
+
+# 5. Combine all valid, cleaned data frames into one master data frame
+master_combined_df <- bind_rows(valid_sheets_list)
+```
+
+clean
+
+```{r}
+# Alternatively, drop any column containing the word "total"
+master_combined_df <- master_combined_df %>% 
+  select(-contains("excl"))
+
+# 1. Define the key columns that uniquely identify a single field observation
+observation_keys <- c("date", "location", "start_time", "stop_time")
+
+# 2. Filter totals, collapse duplicates, and merge unique column values
+master_deduplicated <- master_combined_df %>%
+  # Drop calculated total columns created in Excel
+  select(-matches("(?i)^excl")) %>% 
+  
+  # Group by the unique observation key
+  group_by(across(any_of(observation_keys))) %>% 
+  
+  # For each column, take the first non-NA value across the matching rows
+  summarise(
+    across(everything(), ~ ifelse(all(is.na(.x)), NA, na.omit(.x)[1])),
+    .groups = "drop"
+  )
+```
+
+clean dates and times
+
+```{r}
+master_deduplicated <- master_deduplicated %>%
+  mutate(
+    # 1. Convert Excel serial number to Date (e.g., 2005-04-27)
+    date = excel_numeric_to_date(as.numeric(date)),
+    
+    # 2. Convert fraction of day to HH:MM:SS format
+    start_time = as_hms(as.numeric(start_time) * 86400),
+    stop_time   = as_hms(as.numeric(stop_time) * 86400)
+  )
+```
+
+export
+
+```{r}
+write_csv(master_deduplicated, here("AI_assisted", "reformatted_clean.csv"))
+```

@@ -1,0 +1,47 @@
+---
+title: "In class"
+author: "Gabby Tapat"
+format: html
+editor: visual
+---
+
+have a shiny folder
+
+app.R
+
+folder is the name of your app
+
+1\) Load libraries
+
+```{r}
+library(shiny)
+```
+
+2\) Load data
+
+```{r}
+
+```
+
+3\) Data Analysis
+
+```{r}
+
+ui <- fluidPage('Hello World') #fluid page makes a page
+
+server <- function(input, output){}
+
+library(shiny)
+
+ui <- fluidPage(
+  
+)
+
+server <- function(input, output, session) {
+  
+}
+
+shinyApp(ui, server)
+
+
+```
