@@ -12,7 +12,7 @@ library(here)
 
 
 #Load data
-combined <- read_csv(here("week_11", "hydrograph", "data", "gage_data.csv"))
+combined <- read_csv(here("week_11", "hydrograph", "gage_data.csv"))
 
 
 choices <- c(
@@ -34,9 +34,9 @@ ui <- fluidPage(
       sidebarPanel(
         selectInput("monitoring_station_id", "Select Stream:", choices = choices),
         dateRangeInput("dateRange", "Date Range:",
-                       start = as.Date(min(combined$time, na.rm = TRUE)),
-                       end   = as.Date(max(combined$time, na.rm = TRUE))),
-        helpText("Warning: There are gaps in the data plus not all stations started data collection within same time period"),
+                       start = min(combined$time, na.rm = TRUE),
+                       end   = max(combined$time, na.rm = TRUE)),
+        helpText("Warning: There are gaps in the data"),
         width = 3
       ),
 
@@ -53,7 +53,7 @@ ui <- fluidPage(
     )
 )
 
-# Define server logic required to draw a histogram
+# Define server logic required to create plots & summary table
 server <- function(input, output) {
 
   # Filter data reactively
@@ -66,7 +66,7 @@ server <- function(input, output) {
              time <= as_datetime(input$dateRange[2]))
   })
   
-  # Create plot for discharge/streamflow (term used interchangeably)
+  # Create plot for discharge/stream flow (term used interchangeably)
   output$Q_plot <- renderPlot({
     d <- filtered()
     validate(need(nrow(d)>0, "No data for selection")) #Validates input values and conditions for reactive rendering

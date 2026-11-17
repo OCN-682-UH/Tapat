@@ -1,0 +1,12 @@
+name: hydrograph_for_selected_ala_wai_watershed_streams
+title: Hydrograph for Selected Ala Wai Watershed Streams
+username: gtapat
+account: gtapat
+server: connect.posit.cloud
+hostUrl: https://api.connect.posit.cloud/v1
+appId: 01a1eac2-5b31-299c-61f5-31eddfcacd9d
+bundleId:
+url: https://connect.posit.cloud/gtapat/content/01a1eac2-5b31-299c-61f5-31eddfcacd9d
+version: 1
+asMultiple: FALSE
+asStatic: FALSE

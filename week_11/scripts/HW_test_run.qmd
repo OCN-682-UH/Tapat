@@ -43,7 +43,9 @@ combined <- bind_rows(makiki, mp, pukele, waihi) |>
          -turbidity_FNU_1, -turbidity_FNU_2,
          -gage_height_ft_1, -gage_height_ft_2,
          -ssc_mg_L_1, -ssc_mg_L_2) |>
+  filter(year(time) %in% c(2025, 2026)) |>
   write_csv(here("week_11", "data", "gage_data.csv"))
+  
 ```
 
 3\) Plot
